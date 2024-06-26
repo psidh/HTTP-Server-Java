@@ -30,8 +30,9 @@ public class Main{
       // Correctly use the request path
       String requestPath = HTTPRequest[1];
       
-      if (requestPath.equals("/echo/banana")) {
-        out.write("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 6\r\n\r\nbanana".getBytes());
+      if (requestPath.startsWith("/echo/")) {
+        String msg = HTTPRequest[1].substring(6);
+        out.write(("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: " + msg.length() + "\r\n\r\n" + msg).getBytes());
       } else if(requestPath.equals("/")) {
         out.write("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 0\r\n\r\n".getBytes());
       } else {
