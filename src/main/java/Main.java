@@ -32,9 +32,9 @@ public class Main {
       OutputStream out  = clientSocket.getOutputStream();
       
       if(HTTPRequest[1].equals("/")){
-        out.write("HTTP/1.1 200 OK\n".getBytes());
+        out.write("HTTP/1.1 200 OK\r\n".getBytes());
       }else{
-        out.write("HTTP/1.1 404 Not Found\n".getBytes());
+        out.write("HTTP/1.1 404 Not Found\r\n".getBytes());
       }
       System.out.println("accepted new connection");
 
