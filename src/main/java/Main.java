@@ -31,13 +31,13 @@ public class Main {
       String[] HTTPRequest  = line.split(" ", 0);
       OutputStream out  = clientSocket.getOutputStream();
       
-      if(HTTPRequest[1].equals("/")){
-        out.write("HTTP/1.1 200 OK\r\n".getBytes());
-      }else{
-        out.write("HTTP/1.1 404 Not Found\r\n".getBytes());
+      if (HTTPRequest[1].equals("/")) {
+        out.write("HTTP/1.1 200 OK\r\n\r\n".getBytes());
+      } else {
+        out.write("HTTP/1.1 404 Not Found\r\n\r\n".getBytes());
       }
+      out.flush();
       System.out.println("accepted new connection");
-
 
     } catch (IOException e) {
       System.out.println("IOException: " + e.getMessage());
