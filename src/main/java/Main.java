@@ -29,6 +29,7 @@ public class Main {
       System.out.println("received: " + line);
 
       String[] HTTPRequest  = line.split(" ", 0);
+      System.out.println("request: " + HTTPRequest[1]);
       OutputStream out  = clientSocket.getOutputStream();
       
       if (HTTPRequest[1].equals("/")) {
