@@ -137,6 +137,7 @@
 
 import java.io.*;
 import java.net.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 
 public class Main {
@@ -205,6 +206,8 @@ class ClientHandler implements Runnable {
 
             if (method.equals("POST") && path.startsWith("/files/")) {
                 handlePostRequest(path.substring("/files/".length()), reader, out);
+            } else if (method.equals("GET") && path.startsWith("/files/")) {
+                handleGetRequest(path.substring("/files/".length()), out);
             } else {
                 // Invalid request method or path
                 String response = "HTTP/1.1 404 Not Found\r\n\r\n";
@@ -247,5 +250,24 @@ class ClientHandler implements Runnable {
         // Send response
         String response = "HTTP/1.1 201 Created\r\n\r\n";
         out.write(response.getBytes());
+    }
+
+    private void handleGetRequest(String filename, OutputStream out) throws IOException {
+        String filePath = directoryPath + File.separator + filename;
+
+        File file = new File(filePath);
+
+        if (file.exists() && !file.isDirectory()) {
+            byte[] fileContent = Files.readAllBytes(file.toPath());
+
+            String httpResponse =
+                    "HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: " +
+                    fileContent.length + "\r\n\r\n" + new String(fileContent);
+
+            out.write(httpResponse.getBytes(StandardCharsets.UTF_8));
+        } else {
+            String response = "HTTP/1.1 404 Not Found\r\n\r\n";
+            out.write(response.getBytes());
+        }
     }
 }
