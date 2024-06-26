@@ -1,7 +1,7 @@
 import java.io.*;
 import java.net.*;
 
-public class FileServer {
+public class Main {
     private static final int PORT = 4221;
     private static String directoryPath;
 
