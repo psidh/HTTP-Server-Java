@@ -1,14 +1,16 @@
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.ServerSocket;
-import java.net.Socket;
+import java.io.*;
+import java.net.*;
+import java.nio.file.*;
 
 public class Main {
   public static void main(String[] args) {
-    System.out.println("Logs from your program will appear here!");
+    if (args.length != 2 || !args[0].equals("--directory")) {
+      System.err.println("Usage: java Main --directory <directory>");
+      System.exit(1);
+    }
+
+    String directoryPath = args[1];
+    System.out.println("Files directory: " + directoryPath);
 
     ServerSocket serverSocket = null;
 
@@ -17,11 +19,11 @@ public class Main {
       serverSocket.setReuseAddress(true);
 
       while (true) {
-        Socket clientSocket = serverSocket.accept(); // Wait for connection from client.
+        Socket clientSocket = serverSocket.accept(); 
         System.out.println("Accepted new connection");
 
         // Create a new thread for each connection
-        new Thread(new ClientHandler(clientSocket)).start();
+        new Thread(new ClientHandler(clientSocket, directoryPath)).start();
       }
 
     } catch (IOException e) {
@@ -38,9 +40,11 @@ public class Main {
 
 class ClientHandler implements Runnable {
   private Socket clientSocket;
+  private String directoryPath;
 
-  public ClientHandler(Socket clientSocket) {
+  public ClientHandler(Socket clientSocket, String directoryPath) {
     this.clientSocket = clientSocket;
+    this.directoryPath = directoryPath;
   }
 
   @Override
@@ -50,15 +54,15 @@ class ClientHandler implements Runnable {
       BufferedReader reader = new BufferedReader(new InputStreamReader(in));
       OutputStream out = clientSocket.getOutputStream();
       
-      // Read the request line
+    
       String line = reader.readLine();
       System.out.println("Received: " + line);
 
-      // Split the request line into parts
+      
       String[] HTTPRequest = line.split(" ", 0);
       System.out.println("Request Path: " + HTTPRequest[1]);
 
-      // Continue reading headers
+
       String header;
       String userAgent = null;
       while ((header = reader.readLine()) != null && !header.isEmpty()) {
@@ -67,19 +71,31 @@ class ClientHandler implements Runnable {
         }
       }
 
-      // Handle the request
+      
       String requestPath = HTTPRequest[1];
       
-      if (requestPath.equals("/user-agent") && userAgent != null) {
-        String response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: " + userAgent.length() + "\r\n\r\n" + userAgent;
-        out.write(response.getBytes());
-      } else if (requestPath.startsWith("/echo/")) {
-        String msg = requestPath.substring(6);
-        String response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: " + msg.length() + "\r\n\r\n" + msg;
-        out.write(response.getBytes());
-      } else if(requestPath.equals("/")) {
-        String response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 0\r\n\r\n";
-        out.write(response.getBytes());
+      if (requestPath.startsWith("/files/")) {
+        String filename = requestPath.substring("/files/".length());
+        String filePath = directoryPath + File.separator + filename;
+        
+        File file = new File(filePath);
+        if (file.exists() && !file.isDirectory()) {
+          
+          byte[] fileContent = Files.readAllBytes(file.toPath());
+          String contentType = "application/octet-stream";
+          String contentLength = String.valueOf(fileContent.length);
+          
+          String response = "HTTP/1.1 200 OK\r\n" +
+                            "Content-Type: " + contentType + "\r\n" +
+                            "Content-Length: " + contentLength + "\r\n\r\n";
+          
+          out.write(response.getBytes());
+          out.write(fileContent);
+        } else {
+
+          String response = "HTTP/1.1 404 Not Found\r\n\r\n";
+          out.write(response.getBytes());
+        }
       } else {
         String response = "HTTP/1.1 404 Not Found\r\n\r\n";
         out.write(response.getBytes());
