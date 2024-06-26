@@ -142,9 +142,8 @@ import java.nio.file.*;
 
 public class Main {
     private static String directoryPath = null;
-
     public static void main(String[] args) {
-        if (args.length > 1 && args[0].equals("--directory")) {
+        if (args.length ==2  && args[0].equals("--directory")) {
             directoryPath = args[1];
         } else {
             System.err.println("Usage: java Main --directory <directory>");
