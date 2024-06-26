@@ -4,12 +4,14 @@ import java.nio.file.*;
 
 public class Main {
   public static void main(String[] args) {
+    String directoryPath = "/tmp"; // Default directory path (adjust as needed)
+
     if (args.length != 2 || !args[0].equals("--directory")) {
       System.err.println("Usage: java Main --directory <directory>");
       System.exit(1);
     }
 
-    String directoryPath = args[1];
+    directoryPath = args[1];
     System.out.println("Files directory: " + directoryPath);
 
     ServerSocket serverSocket = null;
@@ -19,7 +21,7 @@ public class Main {
       serverSocket.setReuseAddress(true);
 
       while (true) {
-        Socket clientSocket = serverSocket.accept(); 
+        Socket clientSocket = serverSocket.accept(); // Wait for connection from client.
         System.out.println("Accepted new connection");
 
         // Create a new thread for each connection
@@ -54,15 +56,15 @@ class ClientHandler implements Runnable {
       BufferedReader reader = new BufferedReader(new InputStreamReader(in));
       OutputStream out = clientSocket.getOutputStream();
       
-    
+      // Read the request line
       String line = reader.readLine();
       System.out.println("Received: " + line);
 
-      
+      // Split the request line into parts
       String[] HTTPRequest = line.split(" ", 0);
       System.out.println("Request Path: " + HTTPRequest[1]);
 
-
+      // Continue reading headers
       String header;
       String userAgent = null;
       while ((header = reader.readLine()) != null && !header.isEmpty()) {
@@ -71,7 +73,7 @@ class ClientHandler implements Runnable {
         }
       }
 
-      
+      // Handle the request
       String requestPath = HTTPRequest[1];
       
       if (requestPath.startsWith("/files/")) {
@@ -80,7 +82,7 @@ class ClientHandler implements Runnable {
         
         File file = new File(filePath);
         if (file.exists() && !file.isDirectory()) {
-          
+          // File found, prepare to send response
           byte[] fileContent = Files.readAllBytes(file.toPath());
           String contentType = "application/octet-stream";
           String contentLength = String.valueOf(fileContent.length);
@@ -92,11 +94,12 @@ class ClientHandler implements Runnable {
           out.write(response.getBytes());
           out.write(fileContent);
         } else {
-
+          // File not found
           String response = "HTTP/1.1 404 Not Found\r\n\r\n";
           out.write(response.getBytes());
         }
       } else {
+        // Invalid request path
         String response = "HTTP/1.1 404 Not Found\r\n\r\n";
         out.write(response.getBytes());
       }
