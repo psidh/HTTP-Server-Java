@@ -5,48 +5,44 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.Buffer;
-
 
 public class Main {
   public static void main(String[] args) {
+    System.out.println("Logs from your program will appear here!");
 
-    System.out.println("Beginning of the program");
-    ServerSocket server = null;
-    Socket client = null;
+    ServerSocket serverSocket = null;
+    Socket clientSocket = null;
 
     try {
-
-      server = new ServerSocket(4221);
-      server.setReuseAddress(true);
-      client = server.accept();
-
-      InputStream in = client.getInputStream();
-      BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-      OutputStream out = client.getOutputStream();
-
-      String line = reader.readLine();
-      System.out.println("Received: " + line);
+      serverSocket = new ServerSocket(4221);
+      serverSocket.setReuseAddress(true);
+      clientSocket = serverSocket.accept(); // Wait for connection from client.
       
-      String[] HTTPRequest = line.split(" ", 0);
-      System.out.println("Method: " + HTTPRequest[0]);
-      System.out.println("request Path: " + HTTPRequest[1]);
+      InputStream in = clientSocket.getInputStream();
+      BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+      OutputStream out = clientSocket.getOutputStream();
+      
+      String line = reader.readLine();
+      System.out.println("received: " + line);
 
+      String[] HTTPRequest  = line.split(" ", 0);
+      System.out.println("request: " + HTTPRequest[1]);
+
+      // Continue reading headers
       String header;
       String userAgent = null;
-
       while ((header = reader.readLine()) != null && !header.isEmpty()) {
         if (header.startsWith("User-Agent:")) {
           userAgent = header.substring("User-Agent:".length()).trim();
         }
       }
 
-
+      // Correctly use the request path
       String requestPath = HTTPRequest[1];
-
+      
       if (requestPath.equals("/user-agent") && userAgent != null) {
-        String res = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nContent-Length: " +  userAgent.length() +  "\r\n\r\n" + userAgent;
-        out.write(res.getBytes());
+        String response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: " + userAgent.length() + "\r\n\r\n" + userAgent;
+        out.write(response.getBytes());
       } else if (requestPath.startsWith("/echo/")) {
         String msg = requestPath.substring(6);
         String response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: " + msg.length() + "\r\n\r\n" + msg;
@@ -58,19 +54,19 @@ public class Main {
         String response = "HTTP/1.1 404 Not Found\r\n\r\n";
         out.write(response.getBytes());
       }
+
       out.flush();
       System.out.println("accepted new connection");
-       
-    } catch (Exception e) {
-      System.out.println("Error: " + e.getMessage());
+
+    } catch (IOException e) {
+      System.out.println("IOException: " + e.getMessage());
     } finally {
       try {
-        if (client != null) client.close();
-        if (server != null) server.close();
+        if (clientSocket != null) clientSocket.close();
+        if (serverSocket != null) serverSocket.close();
       } catch (IOException e) {
         System.out.println("IOException during cleanup: " + e.getMessage());
       }
     }
-    
   }
 }
