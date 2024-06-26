@@ -32,7 +32,7 @@ public class Main {
       System.out.println("request: " + HTTPRequest[1]);
       OutputStream out  = clientSocket.getOutputStream();
       
-      if (HTTPRequest[1].substring(0, HTTPRequest.length - 1).equals("/echo/abc")){
+      if (HTTPRequest[1].substring(0, HTTPRequest.length - 1).equals("/echo/")){
         out.write("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 3\r\n\r\nabc".getBytes());
       } else if(HTTPRequest[1].substring(0, HTTPRequest.length - 1).equals("/")) {
         out.write("HTTP/1.1 200 Not Found\r\n\r\n".getBytes());
