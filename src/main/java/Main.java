@@ -11,22 +11,52 @@ public class Main {
     System.out.println("Logs from your program will appear here!");
 
     ServerSocket serverSocket = null;
-    Socket clientSocket = null;
 
     try {
       serverSocket = new ServerSocket(4221);
       serverSocket.setReuseAddress(true);
-      clientSocket = serverSocket.accept(); // Wait for connection from client.
-      
+
+      while (true) {
+        Socket clientSocket = serverSocket.accept(); // Wait for connection from client.
+        System.out.println("Accepted new connection");
+
+        // Create a new thread for each connection
+        new Thread(new ClientHandler(clientSocket)).start();
+      }
+
+    } catch (IOException e) {
+      System.out.println("IOException: " + e.getMessage());
+    } finally {
+      try {
+        if (serverSocket != null) serverSocket.close();
+      } catch (IOException e) {
+        System.out.println("IOException during cleanup: " + e.getMessage());
+      }
+    }
+  }
+}
+
+class ClientHandler implements Runnable {
+  private Socket clientSocket;
+
+  public ClientHandler(Socket clientSocket) {
+    this.clientSocket = clientSocket;
+  }
+
+  @Override
+  public void run() {
+    try {
       InputStream in = clientSocket.getInputStream();
       BufferedReader reader = new BufferedReader(new InputStreamReader(in));
       OutputStream out = clientSocket.getOutputStream();
       
+      // Read the request line
       String line = reader.readLine();
-      System.out.println("received: " + line);
+      System.out.println("Received: " + line);
 
-      String[] HTTPRequest  = line.split(" ", 0);
-      System.out.println("request: " + HTTPRequest[1]);
+      // Split the request line into parts
+      String[] HTTPRequest = line.split(" ", 0);
+      System.out.println("Request Path: " + HTTPRequest[1]);
 
       // Continue reading headers
       String header;
@@ -37,7 +67,7 @@ public class Main {
         }
       }
 
-      // Correctly use the request path
+      // Handle the request
       String requestPath = HTTPRequest[1];
       
       if (requestPath.equals("/user-agent") && userAgent != null) {
@@ -56,14 +86,11 @@ public class Main {
       }
 
       out.flush();
-      System.out.println("accepted new connection");
-
     } catch (IOException e) {
       System.out.println("IOException: " + e.getMessage());
     } finally {
       try {
         if (clientSocket != null) clientSocket.close();
-        if (serverSocket != null) serverSocket.close();
       } catch (IOException e) {
         System.out.println("IOException during cleanup: " + e.getMessage());
       }

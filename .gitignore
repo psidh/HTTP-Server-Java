@@ -2,3 +2,8 @@ java_http.jar
 target/*
 target/
 .idea/
+
+
+.vscode
+/.vscode/
+.vscode/
