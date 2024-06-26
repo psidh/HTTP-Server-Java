@@ -31,9 +31,11 @@ public class Main {
       String[] HTTPRequest  = line.split(" ", 0);
       System.out.println("request: " + HTTPRequest[1]);
       OutputStream out  = clientSocket.getOutputStream();
+
+      System.out.println("console: " + HTTPRequest[1].substring(0, HTTPRequest.length - 1));
       
-      if (HTTPRequest[1].substring(0, HTTPRequest.length - 1).equals("/echo/")){
-        out.write("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 3\r\n\r\nabc".getBytes());
+      if (HTTPRequest[1].substring(0, HTTPRequest.length - 1).equals("/echo/banana")){
+        out.write("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 3\r\n\r\nbanana".getBytes());
       } else if(HTTPRequest[1].substring(0, HTTPRequest.length - 1).equals("/")) {
         out.write("HTTP/1.1 200 Not Found\r\n\r\n".getBytes());
       } else{
