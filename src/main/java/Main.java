@@ -134,7 +134,6 @@
 //   }
 
 // }
-
 import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
@@ -142,8 +141,9 @@ import java.nio.file.*;
 
 public class Main {
     private static String directoryPath = null;
+
     public static void main(String[] args) {
-        if (args.length ==2  && args[0].equals("--directory")) {
+        if (args.length == 2 && args[0].equals("--directory")) {
             directoryPath = args[1];
         } else {
             System.err.println("Usage: java Main --directory <directory>");
@@ -152,11 +152,9 @@ public class Main {
 
         System.out.println("Files directory: " + directoryPath);
 
-        ServerSocket serverSocket = null;
-
-        try {
-            serverSocket = new ServerSocket(4221);
+        try (ServerSocket serverSocket = new ServerSocket(4221)) {
             serverSocket.setReuseAddress(true);
+            System.out.println("Server started. Listening on port 4221...");
 
             while (true) {
                 Socket clientSocket = serverSocket.accept(); // Wait for connection from client.
@@ -168,15 +166,10 @@ public class Main {
 
         } catch (IOException e) {
             System.out.println("IOException: " + e.getMessage());
-        } finally {
-            try {
-                if (serverSocket != null) serverSocket.close();
-            } catch (IOException e) {
-                System.out.println("IOException during cleanup: " + e.getMessage());
-            }
         }
     }
 }
+
 
 class ClientHandler implements Runnable {
     private Socket clientSocket;
@@ -227,7 +220,7 @@ class ClientHandler implements Runnable {
 
     private void handlePostRequest(String filename, BufferedReader reader, OutputStream out) throws IOException {
         String filePath = directoryPath + File.separator + filename;
-
+    
         // Read headers
         String header;
         int contentLength = 0;
@@ -236,37 +229,39 @@ class ClientHandler implements Runnable {
                 contentLength = Integer.parseInt(header.substring("Content-Length:".length()).trim());
             }
         }
-
+    
         // Read request body
         char[] body = new char[contentLength];
         reader.read(body, 0, contentLength);
-
+    
         // Write body to file
         try (FileWriter writer = new FileWriter(filePath)) {
             writer.write(body);
         }
-
+    
         // Send response
         String response = "HTTP/1.1 201 Created\r\n\r\n";
         out.write(response.getBytes());
     }
 
+    
     private void handleGetRequest(String filename, OutputStream out) throws IOException {
         String filePath = directoryPath + File.separator + filename;
-
+    
         File file = new File(filePath);
-
+    
         if (file.exists() && !file.isDirectory()) {
             byte[] fileContent = Files.readAllBytes(file.toPath());
-
+    
             String httpResponse =
                     "HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: " +
-                    fileContent.length + "\r\n\r\n" + new String(fileContent);
-
+                    fileContent.length + "\r\n\r\n";
             out.write(httpResponse.getBytes(StandardCharsets.UTF_8));
+            out.write(fileContent);
         } else {
             String response = "HTTP/1.1 404 Not Found\r\n\r\n";
             out.write(response.getBytes());
         }
     }
+    
 }
